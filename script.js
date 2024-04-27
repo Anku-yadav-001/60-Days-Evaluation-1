@@ -3,19 +3,22 @@ let product_catagories=document.getElementById("product-catagories")
 let sort_price=document.getElementById("sort-price");
 let search_box=document.getElementById("search-box")
 
-async function fetchData(category){
+async function fetchData(category,searchQuery){
     container.innerHTML=""
     let URL=`https://fakestoreapi.com/products`
     if(category=="electronics" || category=="jewelery" || category=="men's clothing" || category=="women's clothing"){
         URL=URL+`/category/${category}` //filter on  the basis of catagory
     }
   if(category=="asc" || category=="desc"){
-    URL=URL+`?sort=${category}` //filter on the basis of price
+    URL=URL+`?sortBy=price&order=${category}` //filter on the basis of price
   }
-
+  if (searchQuery) {
+    URL = URL + `?title=${searchQuery}`; // Search by title
+}
     try {
         let response=await fetch(URL)
         let answer=await response.json();
+        answer=applySorting(answer,category)
         displayData(answer);//invoke the displayData function with the data coming from the API
     } catch (error) {
         console.log(error);
@@ -46,27 +49,15 @@ sort_price.addEventListener("change",function(){
     fetchData(sort_price.value)//take the value of price dorting form UI
 })
 search_box.addEventListener("input",function(){
-     fetchData(search_box.value)//input with the help of Input and take the search value
+    let searchQuery = search_box.value;
+    fetchData(product_catagories.value, searchQuery);//input with the help of Input and take the search value
 })
 
-// search functionality
-let timer;
-async function handleSearch(title){
-    let resp=await fetch("https://fakestoreapi.com/products")
-    let ans=await resp.json();
-     
-    return ans.filter(items=>items.title.toLowerCase().includes(title.toLowerCase()))
-   
-}
- function handleInput(title){
-        clearTimeout(timer)
-        timer=setTimeout(()=>{
-            let result=handleSearch(title)
-            console.log(result);
-            result.map(element => {
-                container.innerHTML=""
-                container.textContent=element.title;
-                console.log(container);
-            });
-        },3000)
+function applySorting(products, sortingOption) {
+    if (sortingOption === "asc") {
+        return products.sort((a, b) => a.price - b.price);
+    } else if (sortingOption === "desc") {
+        return products.sort((a, b) => b.price - a.price);
+    }
+    return products;
 }
